@@ -1,0 +1,220 @@
+#tidyverse
+#download library
+library(tidyverse)
+
+  #dplyr => data transformation
+# 1. select
+# 2. filter
+# 3. mutate
+# 4. arrange
+# 5. summarise + group_by
+
+#select columns
+select(mtcars, mpg, hp, wt)
+
+select(mtcars, contains("a"))
+select(mtcars, starts_with("a"))
+select(mtcars, ends_with("p"))
+select(mtcars, 1,3,5)
+select(mtcars, 1:5, am)
+select(mtcars, mpg:disp)
+
+# %>% Operator
+#Data pipeline in R
+#filter 
+mtcars %>% 
+  select(mpg, hp, wt) %>%
+  filter(mpg > 30 & hp > 100) %>%
+  rownames()
+
+car_hp <- mtcars %>% 
+  select(mpg, hp, wt) %>%
+  filter(hp > 100) %>%
+  rownames()
+
+mtcars %>% 
+  select(mpg, hp, wt, am) %>%
+  filter(mpg > 30 & am == 1) 
+
+mtcars %>% 
+  select(mpg, hp, wt, am) %>%
+  filter(mpg > 30 | am == 1) %>%
+  filter(mpg < 20 )
+
+#mutate
+
+mtcars %>% 
+  head() %>%
+  rownames()
+
+mtcars %>%
+  rownames_to_column() %>%
+  select(model = rowname,
+         milePerGallon = mpg,
+         horsePower = hp,
+         weight = wt) %>%
+  head()
+  
+mtcars <- mtcars %>%
+  rownames_to_column() %>%
+  rename(model = rowname)
+
+head(mtcars)
+
+#filter model names
+#filter model names starts with M
+mtcars %>% 
+  select(model, mpg, hp, wt) %>%
+  filter(grepl ("^Me", model))
+
+grepl("^M", mtcars$model)
+
+#filter model names ends with n
+mtcars %>% 
+  select(model, mpg, hp, wt) %>%
+  filter(grepl ("n$", model))
+
+
+#mutate create new column
+df <- mtcars %>%
+  select(model, mpg, hp) %>%
+  head() %>%
+  mutate(mpg_double = mpg*2,
+         mpg_log = log(mpg),
+         hp_double = hp*2 )
+
+#create label
+# am (0 = auto, 1 = manual)
+mtcars <- mtcars %>% 
+  mutate( am = ifelse(am==0, "Auto", "Manual"))
+
+
+# arrange sort data
+mtcars %>%
+  select(model, mpg, am) %>%
+  arrange(desc(mpg)) %>%
+  head(10)
+
+mtcars %>%
+  select(model, am, mpg) %>%
+  arrange(am, desc(mpg)) 
+
+#create dataframe from scratch
+df <- data.frame(
+  id = 1:5,
+  country = c("Thailand", "Korea", "Japan", "USA", "Norway")
+)
+
+df %>% 
+  mutate(region = case_when(
+    country %in% c("Thailand", "Korea","Japan") ~ "Asia",
+    country == "USA" ~ "America",
+    TRUE ~ "Other Regions"
+  ))
+
+df2 <- data.frame(id = 6:8,
+                  country = c("Germany", "Italy", "Sweden"))
+
+full_df <- df %>% bind_rows(df2)                  
+
+df3 <- data.frame(id = 9:10,
+                  country = c("Canada", "Greece"))
+
+#combine all information with bind_rows
+df %>% 
+  bind_rows(df2) %>%
+  bind_rows(df3)
+
+list_df <- list(df,df2,df3)
+
+bind_rows(list_df)
+
+#case when in R
+full_df %>%
+  mutate(region = case_when(
+    country %in% c("Thaialnd", "Korea", "Japan") ~ "Asia",
+    country %in% c("Canada","USA") ~ "America",
+    TRUE ~ "Europe"
+  ))
+
+# case when in SQL
+sqldf("select * ,case 
+            when country in ('USA', 'Canada') then 'America'
+            when country in ('Thailand', 'Japan', 'Korea') then 'Asia'
+            else 'Europe'
+            end as region
+            from full_df 
+      ")
+
+
+#summarise + group_by
+
+result <- mtcars %>% 
+  mutate(vs = ifelse(vs==0, "v-shaped", "straight")) %>%
+  group_by(am, vs) %>%
+  summarise(avg_mpg = mean(mpg),
+            sum_mpg = sum(mpg),
+            min_mpg = min(mpg),
+            max_mpg = max(mpg),
+            n = n())
+
+mtcars %>% select(vs)
+
+write_csv(result, "result.csv")
+
+read_csv("result.csv")
+
+# missing value
+# NA ( Not available)
+
+v1 <- c(5,10,15,NA,25)
+
+is.na(v1)
+
+data("mtcars")
+mtcars [5,1] <- NA
+
+mtcars %>% 
+  filter(is.na(mpg))
+
+# ! = revert value
+mtcars %>% 
+  select(mpg, hp, wt) %>%
+  filter(! is.na(mpg))
+  
+  
+#replace missing value
+#cannot find average value if there is any NA 
+mtcars %>% 
+  summarise(avg_mpg = mean(mpg))
+
+#remove missing value and find average value
+mtcars %>%
+  summarise(avg_mpg = mean(mpg, na.rm = TRUE))
+
+mtcars %>% 
+  filter(!is.na(mpg)) %>%
+  summarise(avg_mpg = mean(mpg))
+
+mtcars %>% 
+  summarise(avg_mpg = mean(mpg),
+            sum_mpg = sum(mpg))
+
+mtcars %>% 
+  filter(!is.na(mpg)) %>%
+  summarise(avg_mpg = mean(mpg),
+            sum_mpg = sum(mpg))
+
+#replace missing value with mean value
+mtcars %>% 
+  summarise(mean(mpg, na.rm = T))
+
+#pull only value exclude column name with pull() function
+mean_mpg <- mtcars %>% 
+  summarise(mean(mpg, na.rm = T)) %>%
+  pull()
+
+mtcars %>% 
+  select(mpg) %>%
+  mutate(mpg2 = replace_na(mpg, mean_mpg) )
+ 
