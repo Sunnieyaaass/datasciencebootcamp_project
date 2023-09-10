@@ -1,0 +1,54 @@
+# missing value
+# NA ( Not available)
+
+v1 <- c(5,10,15,NA,25)
+
+is.na(v1)
+
+data("mtcars")
+mtcars [5,1] <- NA
+
+mtcars %>% 
+  filter(is.na(mpg))
+
+# ! = revert value
+mtcars %>% 
+  select(mpg, hp, wt) %>%
+  filter(! is.na(mpg))
+  
+  
+#replace missing value
+#cannot find average value if there is any NA 
+mtcars %>% 
+  summarise(avg_mpg = mean(mpg))
+
+#remove missing value and find average value
+mtcars %>%
+  summarise(avg_mpg = mean(mpg, na.rm = TRUE))
+
+mtcars %>% 
+  filter(!is.na(mpg)) %>%
+  summarise(avg_mpg = mean(mpg))
+
+mtcars %>% 
+  summarise(avg_mpg = mean(mpg),
+            sum_mpg = sum(mpg))
+
+mtcars %>% 
+  filter(!is.na(mpg)) %>%
+  summarise(avg_mpg = mean(mpg),
+            sum_mpg = sum(mpg))
+
+#replace missing value with mean value
+mtcars %>% 
+  summarise(mean(mpg, na.rm = T))
+
+#pull only value exclude column name with pull() function
+mean_mpg <- mtcars %>% 
+  summarise(mean(mpg, na.rm = T)) %>%
+  pull()
+
+mtcars %>% 
+  select(mpg) %>%
+  mutate(mpg2 = replace_na(mpg, mean_mpg) )
+ 
