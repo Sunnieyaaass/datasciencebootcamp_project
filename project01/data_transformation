@@ -2,6 +2,19 @@
 #download library
 library(tidyverse)
 
+#print column's name, type of data , number rows & coloumns in the data
+glimpse(mtcars)
+
+#show information on the first 6 rows
+head(mtcars)
+
+#show information on the last 6 rows
+tail(mtcars)
+
+#determine how many row you need to print
+head(mtcars, 3)
+tail(mtcars, 2)
+
   #dplyr => data transformation
 # 1. select
 # 2. filter
@@ -12,26 +25,24 @@ library(tidyverse)
 #select columns
 select(mtcars, mpg, hp, wt)
 
-select(mtcars, contains("a"))
-select(mtcars, starts_with("a"))
-select(mtcars, ends_with("p"))
-select(mtcars, 1,3,5)
-select(mtcars, 1:5, am)
-select(mtcars, mpg:disp)
+#example how we can select the column by select() function
+select(mtcars, contains("a")) #select all column's name that contains "a" syllable 
+select(mtcars, starts_with("a")) #select all column's name that starts with "a" syllable 
+select(mtcars, ends_with("p")) #select all column's name that ends with "p" syllable 
+select(mtcars, 1,3,5) #select columns where position is 1,3,5 of the table
+select(mtcars, 1:5, am) #select columns where position is from 1 to 5 of the table and column's name "am"
+select(mtcars, mpg:disp) #select all column's name from "mpg" to "disp"
 
-# %>% Operator
+#%>% Operator
 #Data pipeline in R
-#filter 
+#filter function
+#select column mpg, hp, wt from mtcars and filter where mpg greater than 30 and hp greater than 100 and print out only row name
 mtcars %>% 
   select(mpg, hp, wt) %>%
   filter(mpg > 30 & hp > 100) %>%
   rownames()
 
-car_hp <- mtcars %>% 
-  select(mpg, hp, wt) %>%
-  filter(hp > 100) %>%
-  rownames()
-
+#select column mpg, hp, wt, am from mtcars and filter where mpg greater than 30 and am = 1
 mtcars %>% 
   select(mpg, hp, wt, am) %>%
   filter(mpg > 30 & am == 1) 
@@ -41,12 +52,26 @@ mtcars %>%
   filter(mpg > 30 | am == 1) %>%
   filter(mpg < 20 )
 
-#mutate
+#filter model names
+#filter model names starts with "Me"
+mtcars %>% 
+  select(model, mpg, hp, wt) %>%
+  filter(grepl ("^Me", model))
 
+#filter model names ends with n
+mtcars %>% 
+  select(model, mpg, hp, wt) %>%
+  filter(grepl ("n$", model))
+
+#mutate function
+#we use mutate to create new column
+#print only first 6 rows of row names
 mtcars %>% 
   head() %>%
   rownames()
 
+#use select to set a new column's name
+#select row name as a column and set a new name for rowname = model, mpg = milePerGallon, hp = horsePower, wt = weight and print only first 6 rows
 mtcars %>%
   rownames_to_column() %>%
   select(model = rowname,
@@ -54,25 +79,11 @@ mtcars %>%
          horsePower = hp,
          weight = wt) %>%
   head()
-  
+
+#use rename() function to create new column's name ( rowname to model )
 mtcars <- mtcars %>%
   rownames_to_column() %>%
   rename(model = rowname)
-
-head(mtcars)
-
-#filter model names
-#filter model names starts with M
-mtcars %>% 
-  select(model, mpg, hp, wt) %>%
-  filter(grepl ("^Me", model))
-
-grepl("^M", mtcars$model)
-
-#filter model names ends with n
-mtcars %>% 
-  select(model, mpg, hp, wt) %>%
-  filter(grepl ("n$", model))
 
 
 #mutate create new column
@@ -84,12 +95,14 @@ df <- mtcars %>%
          hp_double = hp*2 )
 
 #create label
+#ifelse am = 0 print "Auto", else print "Manual"
 # am (0 = auto, 1 = manual)
 mtcars <- mtcars %>% 
   mutate( am = ifelse(am==0, "Auto", "Manual"))
 
 
 # arrange sort data
+#sorting mpg column in descending order
 mtcars %>%
   select(model, mpg, am) %>%
   arrange(desc(mpg)) %>%
@@ -105,11 +118,13 @@ df <- data.frame(
   country = c("Thailand", "Korea", "Japan", "USA", "Norway")
 )
 
+#create new column with case_when
+#country where is in "Thailand", "Korea","Japan" as a Asia region, country = USA as America region, TRUE = the rest as other region
 df %>% 
   mutate(region = case_when(
     country %in% c("Thailand", "Korea","Japan") ~ "Asia",
     country == "USA" ~ "America",
-    TRUE ~ "Other Regions"
+    TRUE ~ "Other Regions" #or using .default = "Regions"
   ))
 
 df2 <- data.frame(id = 6:8,
@@ -120,13 +135,15 @@ full_df <- df %>% bind_rows(df2)
 df3 <- data.frame(id = 9:10,
                   country = c("Canada", "Greece"))
 
-#combine all information with bind_rows
+#combine all data.frame with bind_rows
 df %>% 
   bind_rows(df2) %>%
   bind_rows(df3)
 
+#use list function as a setlist of data
 list_df <- list(df,df2,df3)
 
+#we can combine list with bind row too
 bind_rows(list_df)
 
 #case when in R
@@ -148,7 +165,6 @@ sqldf("select * ,case
 
 
 #summarise + group_by
-
 result <- mtcars %>% 
   mutate(vs = ifelse(vs==0, "v-shaped", "straight")) %>%
   group_by(am, vs) %>%
@@ -158,63 +174,9 @@ result <- mtcars %>%
             max_mpg = max(mpg),
             n = n())
 
-mtcars %>% select(vs)
-
+#save as csv file
 write_csv(result, "result.csv")
 
+#loading a csv file
 read_csv("result.csv")
 
-# missing value
-# NA ( Not available)
-
-v1 <- c(5,10,15,NA,25)
-
-is.na(v1)
-
-data("mtcars")
-mtcars [5,1] <- NA
-
-mtcars %>% 
-  filter(is.na(mpg))
-
-# ! = revert value
-mtcars %>% 
-  select(mpg, hp, wt) %>%
-  filter(! is.na(mpg))
-  
-  
-#replace missing value
-#cannot find average value if there is any NA 
-mtcars %>% 
-  summarise(avg_mpg = mean(mpg))
-
-#remove missing value and find average value
-mtcars %>%
-  summarise(avg_mpg = mean(mpg, na.rm = TRUE))
-
-mtcars %>% 
-  filter(!is.na(mpg)) %>%
-  summarise(avg_mpg = mean(mpg))
-
-mtcars %>% 
-  summarise(avg_mpg = mean(mpg),
-            sum_mpg = sum(mpg))
-
-mtcars %>% 
-  filter(!is.na(mpg)) %>%
-  summarise(avg_mpg = mean(mpg),
-            sum_mpg = sum(mpg))
-
-#replace missing value with mean value
-mtcars %>% 
-  summarise(mean(mpg, na.rm = T))
-
-#pull only value exclude column name with pull() function
-mean_mpg <- mtcars %>% 
-  summarise(mean(mpg, na.rm = T)) %>%
-  pull()
-
-mtcars %>% 
-  select(mpg) %>%
-  mutate(mpg2 = replace_na(mpg, mean_mpg) )
- 
